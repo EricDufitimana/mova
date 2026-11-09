@@ -1,0 +1,20 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <defs>
+    <pattern id="blocks" width="110" height="90" patternUnits="userSpaceOnUse"><rect x="12" y="12" width="65" height="29" rx="6" fill="#293333"/><rect x="35" y="54" width="60" height="21" rx="4" fill="#293333"/></pattern>
+  </defs>
+  <rect width="1200" height="900" fill="#202829"/>
+  <rect width="1200" height="900" fill="url(#blocks)"/>
+  <path d="M-50 110 Q210 40 360 210 T790 180 T1250 80 L1250 290 Q920 290 730 340 T260 280 T-50 340Z" fill="#263c33"/>
+  <path d="M-50 690 Q210 530 410 710 T900 660 T1250 710 V950 H-50Z" fill="#263c33"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M-60 650 Q250 600 420 450 T800 390 T1260 160 M170-50 Q270 270 550 400 T790 950" stroke="#182022" stroke-width="36"/>
+    <path d="M-60 650 Q250 600 420 450 T800 390 T1260 160 M170-50 Q270 270 550 400 T790 950" stroke="#a48869" stroke-width="14"/>
+    <path d="M-60 280 Q260 350 470 200 T1260 190 M-50 800 Q310 750 580 610 T1260 690 M650-50 Q710 240 590 450 T430 950 M980-50 Q880 350 990 570 T1120 950" stroke="#445052" stroke-width="13"/>
+    <path d="M-30 470 Q220 400 400 530 T850 520 T1240 410 M70-20 Q160 290 120 530 T260 950 M450-20 Q370 180 420 350 T620 940" stroke="#364345" stroke-width="8"/>
+  </g>
+  <g font-family="Arial,sans-serif" text-anchor="middle" fill="#9aaea8" font-size="19" letter-spacing="3">
+    <text x="450" y="345">KIYOVU</text><text x="245" y="570">NYARUGENGE</text><text x="820" y="280">KACYIRU</text><text x="920" y="590">KIMIHURURA</text>
+    <text x="600" y="460" fill="#dfd3bd" font-size="26" font-weight="bold">KIGALI</text>
+    <text x="600" y="490" font-size="10" letter-spacing="2">ILLUSTRATIVE DEMO · NOT FOR NAVIGATION</text>
+  </g>
+</svg>

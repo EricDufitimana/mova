@@ -68,3 +68,27 @@ body.mova-fullscreen-active{overflow:hidden}
 .illustrated-pin.is-busy{border-color:#888;opacity:.75}
 .illustrated-label{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:#fffdf4e8;color:#686c63;border-radius:3px;font:700 9px DM Sans,sans-serif;letter-spacing:1px;padding:6px 9px;white-space:nowrap}
 @media(max-width:760px){.fullscreen-button{padding:9px}.fullscreen-button span{display:none}.app-fullscreen .hero-intro,.app-fullscreen .app-footer{display:none}.app-fullscreen .explorer{display:flex;flex-direction:column;gap:0;overflow:hidden}.app-fullscreen .map-panel{flex:1;min-height:0;height:auto;order:1;border-radius:0}.app-fullscreen .vehicle-sidebar{order:2;min-height:170px;max-height:190px;flex:none;overflow:auto;border-radius:0}.app-fullscreen .vehicle-list{flex-direction:row;overflow-x:auto}.app-fullscreen .vehicle-row{min-width:240px}.app-fullscreen .sidebar-bottom{display:none}}
+
+/* Booking places and rider/driver fare agreement. */
+.booking-field{display:flex;flex-direction:column;gap:8px;margin:16px 0;color:#c9c5c3;font-size:11px;font-weight:700}
+.booking-field input{width:100%;min-width:0;height:46px;padding:0 12px;border:1px solid #4a4544;border-radius:5px;background:#262628;color:#fff;font:inherit;font-size:12px}
+.booking-field input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.booking-error{color:#ffac95;font-size:12px;line-height:1.6}
+.trip-summary{display:flex;align-items:flex-start;gap:9px;color:#c0b9b5;font-size:12px;line-height:1.7;margin:20px 0;overflow-wrap:anywhere}
+.trip-summary>svg{flex-shrink:0;margin-top:3px;color:var(--accent)}
+.trip-summary span svg{vertical-align:middle;margin:0 5px}
+.fare-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fare-choice{display:flex;align-items:flex-start;flex-direction:column;gap:10px;padding:16px 12px;background:#252527;color:#c4bcb7;border:1px solid #4a4544;border-radius:6px;text-align:left}
+.fare-choice strong{font-size:12px;line-height:1.5;color:#f4f0ed}.fare-choice span{font-size:11px;line-height:1.6}.fare-choice svg{color:var(--accent)}
+.fare-choice.chosen-fare{border-color:var(--accent);background:#382922;box-shadow:inset 0 0 0 1px var(--accent)}
+.negotiation-panel{padding:15px;margin-top:16px;background:#222223;border:1px solid #46403d;border-radius:6px}
+.negotiation-heading{display:flex;align-items:center;gap:7px;color:#ead4c7;font-size:11px;flex-wrap:wrap}.negotiation-heading>span{margin-left:auto;font-size:8px;letter-spacing:1px;color:#bca18f}
+.fare-chat{display:flex;flex-direction:column;gap:10px;max-height:230px;overflow-y:auto;overflow-wrap:anywhere;scroll-behavior:smooth}
+.chat-bubble{align-self:flex-start;width:92%;padding:10px 12px;background:#333331;border:1px solid #4b4842;border-radius:8px 8px 8px 0;color:#e3ded8}
+.chat-bubble strong{font-size:10px;color:#dabaa3}.chat-bubble p{font-size:12px;line-height:1.7;margin:5px 0 0}
+.chat-bubble.chat-you{align-self:flex-end;border-color:#73503f;background:#423025;border-radius:8px 8px 0 8px}
+.negotiation-panel .modal-secondary-button{height:auto;min-height:43px;padding:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.fare-agreed{display:flex;align-items:center;gap:7px;color:#9ddbb0;font-size:12px;line-height:1.6;margin:16px 0 0}
+.modal-main-button:disabled{cursor:not-allowed;background:#4e4642;color:#b6ada8}
+.checkout-lines strong,.success-content p{overflow-wrap:anywhere}.booking-entry>div:nth-child(2){min-width:0;overflow-wrap:anywhere}.booking-entry>strong{flex-shrink:0}
+@media(prefers-reduced-motion:reduce){.fare-chat{scroll-behavior:auto}}

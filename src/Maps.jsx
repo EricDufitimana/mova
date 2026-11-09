@@ -1,6 +1,29 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
-import { Circle, MapContainer, Marker, Polyline, TileLayer, useMap } from 'react-leaflet';
+import { Circle, ImageOverlay, MapContainer, Marker, Polyline, TileLayer, useMap } from 'react-leaflet';
+import demoMap from './kigali-demo.svg';
+import { KIGALI } from './data.js';
+
+const DEMO_BOUNDS = [[KIGALI.lat - 0.028, KIGALI.lng - 0.037], [KIGALI.lat + 0.028, KIGALI.lng + 0.037]];
+
+function DemoTiles({ theme, onStatus }) {
+  const loaded = useRef(false);
+  useEffect(() => {
+    loaded.current = false;
+    onStatus('loading');
+    const timeout = setTimeout(() => { if (!loaded.current) onStatus('offline'); }, 8000);
+    return () => clearTimeout(timeout);
+  }, [theme, onStatus]);
+  return <TileLayer
+    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    url={`https://{s}.basemaps.cartocdn.com/${theme === 'dark' ? 'dark_all' : 'rastertiles/voyager'}/{z}/{x}/{y}{r}.png`}
+    subdomains={['a', 'b', 'c', 'd']} maxZoom={19}
+    eventHandlers={{
+      tileload: () => { loaded.current = true; onStatus('ready'); },
+      tileerror: () => { if (!loaded.current) onStatus('offline'); }
+    }}
+  />;
+}
 
 function vehicleIcon(v, selected) {
   const disabled = v.status !== 'Available';
@@ -31,17 +54,12 @@ function MapBridge({ center, selected, locationTick, onReady }) {
   return null;
 }
 
-export function OpenStreetMap({ center, vehicles, selected, onSelect, theme, locationTick, onMapReady, accuracy }) {
+export function OpenStreetMap({ center, vehicles, selected, onSelect, theme, locationTick, onMapReady, accuracy, onTileStatus }) {
   const icons = useMemo(() => Object.fromEntries(vehicles.map(v => [v.id, vehicleIcon(v, selected?.id === v.id)])), [vehicles, selected?.id]);
   const line = selected ? [[center.lat, center.lng], [selected.lat, selected.lng]] : null;
-  return <MapContainer center={[center.lat, center.lng]} zoom={14} className="leaflet-root" zoomControl={false} scrollWheelZoom={true}>
-    <TileLayer
-      key={theme}
-      attribution={theme === 'dark' ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>' : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}
-      url={theme === 'dark' ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'}
-      subdomains={theme === 'dark' ? ['a','b','c','d'] : ['a','b','c']}
-      maxZoom={19}
-    />
+  return <MapContainer center={[center.lat, center.lng]} zoom={14} minZoom={13} maxZoom={19} maxBounds={DEMO_BOUNDS} maxBoundsViscosity={1} className="leaflet-root" zoomControl={false} scrollWheelZoom={true}>
+    <ImageOverlay url={demoMap} bounds={DEMO_BOUNDS} pane="tilePane" zIndex={0} attribution="Mova illustrative Kigali demo" />
+    <DemoTiles key={theme} theme={theme} onStatus={onTileStatus} />
     <Circle center={[center.lat, center.lng]} radius={Math.min(Math.max(accuracy || 100, 45), 1000)} pathOptions={{ color: '#f16b50', weight: 1, fillColor: '#f16b50', fillOpacity: 0.07, opacity: 0.65 }} />
     <Marker position={[center.lat, center.lng]} icon={userIcon} zIndexOffset={500} />
     {line && <Polyline positions={line} pathOptions={{ color: '#f16b50', weight: 2.5, dashArray: '5, 9', opacity: 0.8 }} />}
