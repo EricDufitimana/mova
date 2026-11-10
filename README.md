@@ -1,62 +1,94 @@
-# Mova — live-map transport app prototype
+# Mova: ASYV / Ntunga shared ride demo
 
-**React + Vite + React Leaflet + optional Google Maps**. A high-fidelity, responsive transport discovery prototype using a real draggable/zoomable map, a fixed Kigali demo pickup, nearby mock vehicles, fictional plates/driver profiles, ride filters, simulated calling, demo reservations and simulated mobile-money/card checkout.
+A React/Vite customer map, mobile driver workspace, and shared Node backend. Two people on separate devices can chat, negotiate, manage pickup and a trip, and record payment **after** completion. Customer GPS can supply the pickup. Driver movement from Ntunga is simulated; identities, plates and fares are fictional. No money is transferred.
 
-## Run locally
+Bookings, history and active rides open as large on-page workspaces, with a large map beside readable controls and chat on desktop and stacked sections on phones. The approach defaults to **15 seconds**. The Ntunga rank contains **12 selectable demo motorbikes** plus cars/taxis, each with its own parking pin, plate and fare. A driver device still has to select the chosen plate to receive and respond to its request.
 
-```bash
+Drag to pan, scroll the mouse wheel or pinch to zoom, or use the explicit zoom buttons. **Show all Ntunga bikes** returns to the bike rank; **Fit pickup route** shows pickup and driver together. Polling, animation and selecting a plate do not recenter the map or reset the current zoom. Google markers update their position in place rather than being rebuilt every animation frame.
+
+## Run on two devices
+
+Requires Node.js 22 or newer.
+
+```sh
 npm install
 npm run dev
 ```
 
-Open the address Vite prints (usually http://localhost:5173). The demo opens at a fixed Kigali city-centre pickup without requesting location permission.
+1. Open Vite's Network address on both devices, for example `http://192.168.5.135:5173`. Use the same Wi-Fi, keep the computer awake and server running, and allow Node on your private network if Windows asks. Guest-network isolation may prevent connection.
+2. On the driver device, open **Driver**, select a plate, and tap **Go online with this plate**. Keep the screen open to remain online. No QR invitation is required. A plate already selected on another driver device cannot be taken over; release it there or choose another.
+3. On the other device, open **Customer** and choose the same plate. The initial pickup is **Agahozo-Shalom Youth Village (ASYV)**. Choose **Use my location** for GPS or enter a named pickup. Phone GPS needs HTTPS; on local HTTP use the ASYV pin or a named place.
+4. Book, take the listed fare or make an offer, and choose a payment method for after the trip. Both sides can chat and counteroffer. Only the other person can accept the latest offer; the agreed fare is locked.
+5. The driver chooses a demo duration and taps **I’m on the way**. Both devices see the same animated approach from **Ntunga**, with pause/resume and refresh recovery. Google driving geometry is shared when available; a fallback dashed connection is explicitly illustrative.
+6. The driver marks arrival. The customer checks the plate in person and shares the pickup code only when ready. The driver enters it to start. The animation cannot start the trip or demand payment automatically.
+7. The driver confirms completion. Only then can the customer report an external cash/MoMo payment. The driver checks receipt and confirms to close the ride. These buttons record acknowledgements, not transfers or wallet verification.
 
-**No Google API key is needed.** The default **Kigali map** immediately renders a bundled illustration with interactive vehicle pins. Real CARTO/OpenStreetMap street tiles load above it when the network allows. If tiles fail or take longer than eight seconds, a status notice explains that the illustration is shown; filtering, selection, pan/zoom and demo bookings continue to work. Google Maps is offered only when a key is configured.
+Use **My rides** / **Open active ride** after closing a panel or refreshing. Recent rides retain conversations and receipts. A driver can change or release the plate when no ride is active. A replacement driver session cannot see the previous driver's history. Earlier one-use invitation links remain supported, but the normal workflow uses the tabs.
 
-## Enable full Google Maps mode (optional)
+`localhost` refers to the device itself: use the Network address on phones. Browser identities are scoped to the exact address and localStorage; use the same address to retain access. Customer and driver identities are separate, including when testing by switching tabs in one browser. Use only one server process for the shared store.
 
-1. Create a Google Cloud project, enable **Maps JavaScript API**, set up Google Maps Platform billing and restrict your browser API key by website referrers.
-2. Copy `.env.example` to `.env` and fill in `VITE_GOOGLE_MAPS_API_KEY=...`.
-3. Restart the Vite dev server.
-4. Choose **Google Maps** in the map's top-right toggle. Google Maps will then render interactive vehicle markers and a user-position indicator.
+## Google Maps, GPS and routes
 
-Do **not** use Google's tile URLs with Leaflet or scrape map tiles. Use the official Maps JavaScript API with an authorized key for Google-based production maps. A `VITE_` key is visible in the browser, so **restrict it** via Google Cloud Console. It is not a backend secret.
+Save a browser key in the project-root `.env`, then restart Vite:
 
-## Prototype functionality
+```dotenv
+VITE_GOOGLE_MAPS_API_KEY=your_key
+```
 
-- Real pan/zoom map with OpenStreetMap/CARTO dark or standard tiles.
-- Fixed Kigali demo pickup, recenter control and nearby simulated vehicle positions; no geolocation prompt.
-- Fictional sample vehicles with type, model, driver, plate, estimated arrival, demo fare, ratings, simulated availability, and relative distances.
-- Vehicle pins, search, vehicle-type filters, availability-only toggle, saved vehicles, sort, and a selected-driver card.
-- Google Maps directions link for selected vehicle coordinates.
-- Optional Google Maps JavaScript integration when a key is configured.
-- Call information dialog (does not dial a real phone number).
-- Three-step booking: choose pickup/destination, choose a normal or negotiated fare, then select Cash / MTN MoMo / Airtel Money / Card. Kigali landmarks and custom place names work without an API key.
-- Local demo negotiation: send an offer with an optional message, receive a simulated acceptance or counteroffer, and explicitly agree the fare before checkout. Editing the trip or offer resets the agreement.
-- My rides stores the pickup, destination, payment method, normal/negotiated choice, listed fare and final agreed amount in this browser. No real messages, charges or driver dispatch occur.
-- Demo bookings and favorites persisted only in the browser's localStorage.
-- Responsive mobile layout and keyboard-accessible interface controls.
+Enable Maps JavaScript API, Routes API and Geocoding API as needed, enable billing, and restrict the key to the exact website referrers used by your devices. Browser keys are visible in client code; do not commit them. The local `.env` was empty when this feature was tested, so actual Google access needs a saved usable key.
 
-## Important note on data and privacy
+The app uses Google Maps when configured. Map-loading/authentication failures report the problem and fall back to OpenStreetMap. Routing failures use a clearly labelled illustrative connection instead of claiming a road route. Custom pickup names use geocoding and cannot silently reuse an unrelated pin if lookup fails. Chat and pay-after continue to work without Google.
 
-**Every vehicle, driver, plate number, price, position, and booking is simulated.** Fictional vehicles are placed around a fixed demo pickup in Kigali. Real-time driver tracking, driver consent, plate validation, dispatch, calling and payments would require a genuine backend, authenticated drivers, user safeguards and payment-provider integration. The app does not request or track device location (there is no backend), but map tile services and Google may receive map requests as you browse. Do not interpret the mocked plates as genuine vehicle registrations.
+The approximate initial customer pin is ASYV; the driver starts at the approximate Ntunga locality pin. Sources: [ASYV map pin](https://mapcarta.com/N4078852338), [Ntunga locality](https://www.geonames.org/search.html?q=Ntunga&country=RW), and [ASYV visitor directions](https://www.asyv.org/yourvisit/learn-more/2025/8/21/directions-to-asyv). These are reference points, not surveyed entrances. Select GPS or a geocoded place for the intended meeting point.
 
-## Potential production architecture
+Routing follows [Google's Routes-library guide](https://developers.google.com/maps/documentation/javascript/routes/get-a-route). A driving path is computed once per pickup and sent to the shared server when the driver starts. Endpoints, coordinate bounds and payload size are validated. This is a driving-route demonstration, not motorcycle navigation or a real arrival estimate.
 
-- Supabase Auth + Postgres/PostGIS for drivers, vehicles, verified plates, and ride history.
-- Realtime location updates **only** from opted-in, authenticated drivers. Protect exact locations through short-lived, passenger-authorized access.
-- Server-validated fare estimates and dispatch locks to prevent double booking.
-- Local payment gateway integration for MTN MoMo/Airtel Money with server-side verification and webhooks.
-- Mask driver contact details until a booking is accepted, add moderation and anti-abuse safeguards.
-- Use a proper routing API for road travel times. The prototype's distance is straight-line and its ETAs/fare estimates are fictional.
+Both people see server-timed progress interpolated by distance along the same path. Pause/resume, refreshes and cancellation preserve its state. The simulated speed is independent of real travel time. Reaching the pickup pin cannot start/complete the trip or make payment due: manual arrival, pickup-code verification, trip completion and payment acknowledgement still apply. Earlier requests without a pickup pin retain history but must be cancelled before starting and rebooked for a mapped approach.
 
-## Design reference
+Phone GPS requires HTTPS (localhost is also allowed). For actual mobile GPS or devices on different networks, deploy the shared backend with HTTPS. This change does not publish the app or install certificates. GPS is opt-in; denial or failure leaves the selected/default pickup usable. The submitted pickup is frozen for that ride so later GPS jitter does not move the agreed meeting point. Coordinates are shared with the ride's participants, not included in the public vehicle list. Google and tile services receive map requests.
 
-Inspired by the user's reference, [Conversion](https://conversion.framer.media/), borrowing a dark near-black canvas, strong sans-serif typography, muted strokes and sparing warm orange-red accents. UI is newly designed for a mobility app, rather than reproducing the site.
+## Trip and payment safeguards
 
-## Fullscreen and offline-safe mode (updated)
-- Click the **Fullscreen** button in the top navigation; press **Esc** or click **Exit fullscreen** to return.
-- Use **Kigali map** for interactive vehicle markers on a bundled schematic, with real street tiles when available. The schematic is illustrative and is not navigation data.
-- Use **Offline demo** if your network blocks map tiles. It shows an illustrative Kigali diagram with interactive, simulated vehicle markers, **not** a geographic map or navigation data.
-- The **Google Maps** option appears only when `VITE_GOOGLE_MAPS_API_KEY` is configured.
-- Driver positions, registration plates, fares, bookings, and payment screens are fictional. No transactions occur.
+- No deposit, stored payment card, automatic charge, or prepayment control.
+- Server-enforced roles, ownership, transitions, positive integer fares and input limits. New requests need an online driver.
+- One open ride per customer and driver, including requests and unpaid completed trips; no double booking or silent abandonment of an unpaid ride.
+- Explicit acceptance of the current offer, version checks for stale actions, and a locked agreed fare.
+- A customer-only pickup code gates trip start. Five incorrect attempts lock entry for one minute. The code is not identity verification or proof of safe pickup.
+- Before starting, either side may cancel with a reason, including a no-show. No cancellation charge. Cancelled rides cannot restart. Unaccepted requests expire after ten minutes; accepted trips do not auto-start or auto-complete.
+- During a trip, report a problem and discuss it in chat. Payment acknowledgement pauses until its reporter clears the issue, or the driver waives a completed fare. Reporting does not contact staffed support or emergency services.
+- Payment needs customer acknowledgement and driver receipt confirmation after completion. Non-receipt can be recorded without telling the customer to pay twice. The driver may explicitly waive the completed fare. No automatic collection or dispute adjudication.
+- Keyed ride mutations are idempotent across retries. Driver enrollment can recover from an interrupted response using its device key. Competing updates fail with a conflict instead of overwriting each other.
+- Polling runs about every 1.5 seconds. Connection loss pauses actions, preserves unsent chat drafts in the open panel, and resynchronizes location on reconnection. Background mobile tabs may suspend polling. No push notifications.
+- At most 200 messages per ride and per-IP mutation rate limits. Message text is rendered as text.
+
+## Storage and demo boundaries
+
+The shared store is `.mova/ride-store.json`, ignored by Git. Accepted mutations write a temporary file and rename it into place; invalid mutations roll back. Invalid stored data fails startup rather than silently erasing rides. Back up the file if test history matters. Dev, preview and the built server use the same store; run only one at a time. Set `MOVA_STORE` for a different file.
+
+Device keys stay in browser localStorage; their hashes are stored server-side. A driver sees only rides assigned to that session, and a customer sees only their own. Losing storage or changing the address loses access to that device identity. There is no verified vehicle ownership, account recovery, remote plate reset or admin console. Old browser-only demo bookings remain in localStorage but are not active server rides.
+
+This is a private-network demo. Driver plate selection is open to your test group, not production authentication. Public operation needs HTTPS, verified accounts and vehicles, secure session recovery, a transactional database, backups/monitoring, real routing and opted-in driver GPS, staffed support, and payment-provider reconciliation if taking payments. The app cannot guarantee that a driver physically arrives or an external payment succeeds. It deliberately cannot collect money on an uncompleted ride.
+
+## Built server
+
+```sh
+npm run build
+npm start
+```
+
+Serves the app and API on `0.0.0.0:5173`; set `PORT` to change it. Static-only hosting of `dist` cannot supply the shared backend. `MOVA_DIST` can select a different built directory for isolated tests.
+
+## Verification
+
+```sh
+npm test
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+The Node suite covers ownership, roles, state transitions, negotiation, early-payment rejection, PIN throttling, duplicate/stale requests, double booking, cancellation, expiry, disputes, invitation recovery, durable restart, direct plate selection, coordinate/route validation, and shared simulation timing.
+
+The browser suite uses independent mobile customer/driver sessions. It checks chat, negotiation, GPS pickup, synchronized movement, pause/resume, offline drafts, reload recovery, trip completion, pay-after, receipts and no-show cancellation. It starts an isolated built server on port 5180, with screenshots/traces in `test-results`. Build first. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to use an existing compatible browser executable.
+
+`tests/google-maps.spec.js` tests the Google map/Routes adapter with mocked responses and a non-secret fixture key. It makes no paid requests and cannot verify a real Cloud project. It is skipped unless `MOVA_GOOGLE_TEST` is set; provide a separately built fixture directory via `MOVA_DIST` and optionally isolate the port using `MOVA_TEST_PORT`.
