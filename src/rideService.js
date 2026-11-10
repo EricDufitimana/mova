@@ -12,6 +12,11 @@ export async function api(path, { token, body, id } = {}) {
       const response = await fetch(`/api${path}`, { method: body ? 'POST' : 'GET', signal: controller.signal,
         headers: { ...(body ? {'Content-Type':'application/json'} : {}), ...(token ? {Authorization:`Bearer ${token}`} : {}), ...(id ? {'X-Request-ID':id} : {}) },
         ...(body ? {body: JSON.stringify(body)} : {}) });
+      if (!response.headers.get('content-type')?.includes('application/json')) {
+        const error = new Error('The ride server is unavailable at this address. Open the app from the running Mova server and try again.');
+        error.status = response.ok ? 503 : response.status;
+        throw error;
+      }
       const data = await response.json();
       if (!response.ok) { const error = new Error(data.error || 'The request could not be completed.'); error.status = response.status; throw error; }
       return data;
@@ -34,24 +39,47 @@ export function useRideService(role = 'rider') {
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState('');
   const generation = useRef(0);
+  const inFlight = useRef(null);
   const opening = useRef(null);
   const saveToken = useCallback(value => { localStorage.setItem(key, value); setToken(value); }, [key]);
-  const refresh = useCallback(async () => {
-    if (!token) return;
+  const refresh = useCallback(() => {
+    if (!token) return Promise.resolve();
+    // Reuse a pending read. Starting a new generation every polling tick
+    // discarded every response on connections slower than the polling interval.
+    if (inFlight.current?.token === token && inFlight.current.ticket === generation.current) return inFlight.current.promise;
     const ticket = ++generation.current;
-    try {
-      const next = await api('/state', {token});
-      if (ticket === generation.current) { setState(next); setConnected(true); setError(''); }
-    } catch (failure) {
-      if (ticket === generation.current) { setConnected(false); setError(failure.message); }
-    }
+    const promise = (async () => {
+      try {
+        const next = await api('/state', {token});
+        if (ticket === generation.current) { setState(next); setConnected(true); setError(''); }
+      } catch (failure) {
+        if (ticket === generation.current) { setConnected(false); setError(failure.message); }
+      } finally {
+        if (inFlight.current?.ticket === ticket) inFlight.current = null;
+      }
+    })();
+    inFlight.current = {token, ticket, promise};
+    return promise;
   }, [token]);
   useEffect(() => {
     if (token || role !== 'rider') return;
-    let active = true;
-    opening.current ||= api('/session', {body: {}});
-    opening.current.then(result => { if (active) saveToken(result.token); }).catch(failure => { opening.current = null; if (active) setError(failure.message); });
-    return () => { active = false; };
+    let active = true, retry, busy = false;
+    const connect = async () => {
+      if (busy || !active) return;
+      clearTimeout(retry);
+      busy = true;
+      const pending = opening.current ||= api('/session', {body: {}});
+      try {
+        const result = await pending;
+        if (active) saveToken(result.token);
+      } catch (failure) {
+        if (opening.current === pending) opening.current = null;
+        if (active) { setError(failure.message); retry = setTimeout(connect, 2500); }
+      } finally { busy = false; }
+    };
+    connect();
+    window.addEventListener('online', connect);
+    return () => { active = false; clearTimeout(retry); window.removeEventListener('online', connect); };
   }, [token, role, saveToken]);
   useEffect(() => {
     refresh(); const timer = setInterval(refresh, 1500);

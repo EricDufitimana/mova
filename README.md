@@ -71,12 +71,32 @@ This is a private-network demo. Driver plate selection is open to your test grou
 
 ## Built server
 
+### Vercel deployment
+
+Vercel must deploy the root `api/ride.js` function as well as the Vite frontend. `vercel.json` routes all `/api/*` requests to that function. The local file-backed store is unsuitable for independent serverless instances, so this function uses Postgres for shared sessions, plates, rides, driver heartbeats and request limits.
+
+1. In the Vercel project's **Storage** section, connect a Postgres database (for example, Neon). Enable its environment variables for the deployment environment you use.
+2. Ensure the provider's pooled connection string is available as **DATABASE_URL** or **POSTGRES_URL**, including its required SSL parameters. Keep it server-only; do not use a `VITE_` prefix. Use separate databases for Preview and Production so preview tests do not change live rides.
+3. Deploy this repository with its project root pointing at this directory. The framework is **Vite**, the build command is **npm run build**, and the output directory is **dist**. Include the root `api` directory and `vercel.json` in the deployed source.
+4. Redeploy after connecting storage. The function creates its `mova_ride_state` table automatically, so the database role needs table-creation permission on first use.
+5. Open **/api/info** on the hosted domain. A ready backend returns JSON with the hosted URL. Then choose a driver plate on one device and request that same plate on another.
+
+Without configured storage the function returns an explicit 503 error; it never creates temporary driver sessions that disappear on a cold start. Existing local `.mova` history is not automatically imported into the hosted database.
+
+The database implementation serializes operations on one demo-state row and commits before acknowledging success. This preserves the existing ride rules across function instances and avoids conflicting plate claims. It is suitable for this small demo; a larger service needs normalized tables and indexed queries. Local `npm run dev`, `npm run preview`, and `npm start` continue to use the local file store.
+
+### Run the built app locally
+
 ```sh
 npm run build
 npm start
 ```
 
 Serves the app and API on `0.0.0.0:5173`; set `PORT` to change it. Static-only hosting of `dist` cannot supply the shared backend. `MOVA_DIST` can select a different built directory for isolated tests.
+
+If a hosted site loads the map but plate selection fails, check `/api/info` on that same website. It must return JSON, not the app's HTML page or a hosting error. Deploy this project as a Node service with build command `npm ci && npm run build` and start command `npm start`, and keep `.mova` on persistent storage (or set `MOVA_STORE` to a file on a persistent volume). Run one server instance for the file-backed store. Publishing only `dist` will not connect customer and driver devices.
+
+Slow state requests are allowed to finish before another poll starts. The app retries a failed initial customer connection automatically and resumes polling after a temporary outage; saved device sessions stay in place.
 
 ## Verification
 

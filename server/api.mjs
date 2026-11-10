@@ -2,8 +2,7 @@ import { networkInterfaces } from 'node:os';
 import { RideStore, RideError } from './store.mjs';
 import { resolve } from 'node:path';
 
-export function createApi({ file = resolve(process.env.MOVA_STORE || '.mova/ride-store.json'), store = new RideStore(file) } = {}) {
-  const rates = new Map();
+export function createApi({ file = resolve(process.env.MOVA_STORE || '.mova/ride-store.json'), store = new RideStore(file), rates = new Map(), publicUrls } = {}) {
   const limited = key => {
     const now = Date.now(), bucket = rates.get(key);
     if (!bucket || now - bucket.at > 60000) { rates.set(key, {at: now, n: 1}); return; }
@@ -26,6 +25,7 @@ export function createApi({ file = resolve(process.env.MOVA_STORE || '.mova/ride
         if (!input || typeof input !== 'object' || Array.isArray(input)) throw new RideError(400, 'Expected an object.');
       }
       if (req.method === 'GET' && path === '/api/info') {
+        if (publicUrls) return send(200, { urls: publicUrls });
         const port = Number(req.headers.host?.match(/:(\d+)$/)?.[1]) || 80;
         const urls = Object.values(networkInterfaces()).flat().filter(n => n.family === 'IPv4' && !n.internal).map(n => `http://${n.address}:${port}`);
         return send(200, { urls });
